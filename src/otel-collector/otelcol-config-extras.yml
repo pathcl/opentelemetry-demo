@@ -38,13 +38,14 @@
 # iforest.is_anomaly=true and an iforest.anomaly_score attribute.
 # Set drop_anomalous_data: true only after validating score distributions
 # in Grafana/Jaeger first.
+
 processors:
   isolationforest/traces:
     forest_size: 100
     contamination_rate: 0.05
     training_window: 30m
-    update_frequency: 5m
-    min_samples: 200
+    update_frequency: 1m
+    min_samples: 10
     score_attribute: iforest.anomaly_score
     classification_attribute: iforest.is_anomaly
     features:

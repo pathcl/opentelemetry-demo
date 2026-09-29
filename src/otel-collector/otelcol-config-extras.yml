@@ -31,3 +31,44 @@
 #       exporters: [otlp_http/prometheus, debug, otlp_grpc/mybackend]           # repeat upstream exporters
 #     logs:
 #       exporters: [opensearch, debug, otlp_grpc/mybackend]                     # repeat upstream exporters
+
+# Inline anomaly detection via Isolation Forest.
+# Ships in otelcol-contrib — no additional build step required.
+# Scores span duration and metric values; anomalous items are tagged with
+# iforest.is_anomaly=true and an iforest.anomaly_score attribute.
+# Set drop_anomalous_data: true only after validating score distributions
+# in Grafana/Jaeger first.
+processors:
+  isolationforest/traces:
+    forest_size: 100
+    contamination_rate: 0.05
+    training_window: 30m
+    update_frequency: 5m
+    min_samples: 200
+    score_attribute: iforest.anomaly_score
+    classification_attribute: iforest.is_anomaly
+    features:
+      traces: [duration]
+
+  isolationforest/metrics:
+    forest_size: 100
+    contamination_rate: 0.05
+    training_window: 1h
+    update_frequency: 10m
+    min_samples: 100
+    score_attribute: iforest.anomaly_score
+    classification_attribute: iforest.is_anomaly
+    features:
+      metrics: [value]
+
+service:
+  pipelines:
+    traces:
+      # Repeat all upstream processors and exporters — arrays are replaced, not merged.
+      processors: [resource_detection, memory_limiter, transform/sanitize_spans,
+                   gen_ai_normalizer, transform/redact_sensitive_data, redaction,
+                   isolationforest/traces]
+      exporters: [debug, otlp_grpc/jaeger, span_metrics]
+    metrics:
+      processors: [resource_detection, memory_limiter, isolationforest/metrics]
+      exporters: [debug, otlp_http/prometheus]

@@ -45,7 +45,7 @@ processors:
     contamination_rate: 0.05
     training_window: 30m
     update_frequency: 1m
-    min_samples: 10
+    min_samples: 50
     score_attribute: iforest.anomaly_score
     classification_attribute: iforest.is_anomaly
     features:
